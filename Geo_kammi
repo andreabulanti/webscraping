@@ -1,0 +1,81 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+url_mappa = "https://www.kammi.it/store-locator.html"
+pagina = requests.get(url_mappa)
+soup = BeautifulSoup(pagina.text, 'html.parser')
+
+lista_regioni = []
+areas = soup.find('map', {'name': 'image9'}).find_all('area')
+for area in areas:
+    onclick_attr = area.get('onclick')  
+    if onclick_attr:
+        regione = onclick_attr.split("'")[1]
+        lista_regioni.append(regione)
+
+print(lista_regioni)
+
+lista_province = []
+select_tag = soup.find('select', {'name': 'Provincia'})
+options = select_tag.find_all('option')
+
+
+province_dict = {
+    'AL': 'Alessandria',
+    'AP': 'Ascoli Piceno',
+    'AR': 'Arezzo',
+    'BG': 'Bergamo',
+    'BS': 'Brescia',
+    'CA': 'Cagliari',
+    'CB': 'Campobasso',
+    'CH': 'Chieti',
+    'CI': 'Carbonia-Iglesias',
+    'CN': 'Cuneo',
+    'CO': 'Como',
+    'CR': 'Cremona',
+    'FC': 'Forlì-Cesena',
+    'FE': 'Ferrara',
+    'FI': 'Firenze',
+    'GE': 'Genova',
+    'LC': 'Lecco',
+    'LO': 'Lodi',
+    'MB': 'Monza e Brianza',
+    'MI': 'Milano',
+    'MN': 'Mantova',
+    'MO': 'Modena',
+    'MS': 'Massa-Carrara',
+    'NU': 'Nuoro',
+    'PA': 'Palermo',
+    'PC': 'Piacenza',
+    'PD': 'Padova',
+    'PG': 'Perugia',
+    'PR': 'Parma',
+    'PT': 'Pistoia',
+    'PV': 'Pavia',
+    'RA': 'Ravenna',
+    'RE': 'Reggio Emilia',
+    'RM': 'Roma',
+    'RO': 'Rovigo',
+    'SO': 'Sondrio',
+    'SP': 'La Spezia',
+    'SV': 'Savona',
+    'TE': 'Teramo',
+    'TN': 'Trento',
+    'TO': 'Torino',
+    'TV': 'Treviso',
+    'UD': 'Udine',
+    'VA': 'Varese',
+    'VE': 'Venezia',
+    'VI': 'Vicenza',
+    'VR': 'Verona',
+}
+
+for option in options:
+    sigla_provincia = option.text.strip()  
+    if sigla_provincia in province_dict:
+        nome_completo_provincia = province_dict[sigla_provincia]
+        lista_province.append(nome_completo_provincia)
+
+
+print(lista_province)
