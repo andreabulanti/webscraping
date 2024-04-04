@@ -1,0 +1,74 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def fetch_product_details(base_link, category_link, product_type_link):
+    category_data = []
+    
+    for category in category_link:
+        for product_type in product_type_link:
+            category_url = f"{base_link}{category}{product_type}"
+            category_page = requests.get(category_url)
+            category_soup = BeautifulSoup(category_page.text, "html.parser")
+            
+            product_links = category_soup.find_all("a", onclick=True)  # Selettore da adattare se necessario
+            
+            for product_link in product_links:
+                product_url = product_link['href']
+                product_page = requests.get(product_url)
+                product_soup = BeautifulSoup(product_page.text, "html.parser")
+                
+                product_details = {"category": category, "type": product_type}
+                
+                title_tag = product_soup.find("p", class_="product-title")
+                product_details["name"] = title_tag.text.strip() if title_tag else "N/A"
+                
+                price_tag = product_soup.find("p", class_="price mt-2")
+                product_details["price"] = price_tag.text.strip() if price_tag else "N/A"
+                
+                dettagli = product_soup.find_all("p", class_="mt-4")
+                
+                for dettaglio in dettagli:
+                    if "Tacco:" in dettaglio.text and "Materiale esterno:" in dettaglio.text and 'Materiale interno:' in dettaglio.text and 'Materiale suola:' in dettaglio.text:
+                        descrizione = dettaglio.text.strip()
+                        product_details['description'] = descrizione
+                
+                category_data.append(product_details)
+    
+    return category_data
+
+base_link = "https://www.kammi.it/"
+category_link = ["scarpe-donna/"]
+product_type_link = ["sneakers/", "sandali-bassi/", "stivali-stivaletti/", "zeppe/", "sandali-con-tacco/", "scarpe-con-tacco/", "scarpe-basse/"]
+
+product_details = fetch_product_details(base_link, category_link, product_type_link)
+product_df = pd.DataFrame(product_details)
+
+product_df['category'] = product_df['category'].str.rstrip('/')
+product_df['type'] = product_df['type'].str.rstrip('/')
+product_df['price'] = product_df['price'].str.replace('€', '').str.replace(',', '.').astype(float)
+
+def separa_descrizione(specifiche):
+    dettagli = {}
+    parti = specifiche.split('\n')
+    for parte in parti:
+        chiave_valore = parte.split(':')
+        if len(chiave_valore) == 2:
+            chiave, valore = chiave_valore
+            chiave = chiave.strip()
+            valore = valore.strip()
+            dettagli[chiave] = valore
+    return dettagli
+
+descrizioni_dettagliate = product_df['description'].apply(separa_descrizione)
+product_df['Tacco'] = descrizioni_dettagliate.apply(lambda x: x.get('Tacco', 'N/A'))
+product_df['Materiale esterno'] = descrizioni_dettagliate.apply(lambda x: x.get('Materiale esterno', 'N/A'))
+product_df['Materiale interno'] = descrizioni_dettagliate.apply(lambda x: x.get('Materiale interno', 'N/A'))
+product_df['Materiale suola'] = descrizioni_dettagliate.apply(lambda x: x.get('Materiale suola', 'N/A'))
+product_df = product_df.drop(columns=['description'])
+
+product_df = product_df.reindex(columns=['category','type','name','price','Tacco', 'Cm','Materiale esterno', 'Materiale interno', 'Materiale suola'])
+product_df.drop("Cm", axis = 1, inplace = True)
+
+product_df[['Tacco', 'Cm']] = product_df['Tacco'].str.split(expand=True)
+product_df = product_df.reindex(columns=['category','type','name','price','Tacco', 'Cm','Materiale esterno', 'Materiale interno', 'Materiale suola'])
