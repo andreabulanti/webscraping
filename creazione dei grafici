@@ -1,0 +1,23 @@
+import seaborn as sns
+sns.set_style(style = "darkgrid")
+sns.despine()
+
+# creazione dei grafici
+# Kammi
+
+import matplotlib.pyplot as plt
+fig, axes = plt.subplots(figsize = (10,7))
+my_palette = ["orange", "grey", "grey", "grey", "grey", "grey", "grey"]
+orders = product_df.groupby("type")[["price"]].mean().sort_values(by = "price", ascending = False).index
+sns.barplot(data = product_df, x = "type", y = "price", errorbar = None, palette = my_palette, order = orders)
+plt.xticks(rotation = 90)
+plt.show()
+
+# Lumberjack
+
+fig, axes = plt.subplots(figsize = (10,7))
+my_palette2 = ["orange", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey", "grey"]
+orders2 = lumberjack_df.groupby("Type")[["price"]].mean().sort_values(by = "price", ascending = False).index
+sns.barplot(data = lumberjack_df, x = "Type", y = "price", errorbar = None, order = orders2, palette = my_palette2, estimator="mean")
+plt.xticks(rotation = 90)
+plt.show()
